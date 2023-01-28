@@ -1,0 +1,90 @@
+---
+- name: Install tomcat
+  hosts: all
+  become: yes
+  tasks: 
+    - name: sudo apt update
+      apt: 
+        update_cache: yes
+      when: ansible_facts['distribution'] == "Ubuntu"
+    - name: Install java-11
+      package:
+        name: "{{Java_package}}"
+        state: present
+    - name: add the tomcat group
+      group:
+        name: "{{group_name}}"
+        state: present
+    - name: add the tomcat user
+      user:
+        name: "{{user_name}}"
+        create_home: yes
+        home: "{{user_home}}"
+        shell: "{{user_shell}}"
+        state: present
+        group: "{{group_name}}"
+    - name: wget the tomcat9 file
+      get_url:
+        url: "https://dlcdn.apache.org/tomcat/tomcat-{{tomcat_major_version}}/v{{tomcat_version}}/bin/apache-tomcat-{{tomcat_version}}.tar.gz"
+        dest: /tmp/
+    - name: tar the tomcat9 file
+      unarchive:
+        src: /tmp/apache-tomcat-{{tomcat_version}}.tar.gz
+        dest: "{{user_home}}/"
+        remote_src: yes
+    - name: link the tomcat9 file to latest file
+      file:
+        src: "{{user_home}}/apache-tomcat-{{tomcat_version}}"
+        dest: "{{user_home}}/latest"
+        state: link
+    - name: change permissions /opt/tomcat
+      file: 
+        path: "{{user_home}}"
+        recurse: yes
+        owner: "{{user_name}}"
+        group: "{{group_name}}"
+        state: directory
+    - name: add execute permissions for shell files
+      command: sudo sh -c 'chmod +x /opt/tomcat/latest/bin/*.sh'
+    - name: copy the service file to local to tomcat.service
+      copy: 
+        src: ubuntu.tomcat.service
+        dest: /etc/systemd/system/tomcat.service
+        owner: "{{user_name}}"
+        group: "{{group_name}}"
+      when: ansible_facts['distribution'] == "Ubuntu"
+    - name: copy the service file to local to tomcat.service
+      copy: 
+        src: centos.tomcat.service
+        dest: /etc/systemd/system/tomcat.service
+        owner: "{{user_name}}"
+        group: "{{group_name}}"
+      when: ansible_facts['distribution'] == "CentOS"
+    - name: daemon-reload and enable tomcat
+      systemd:
+        name: tomcat.service
+        daemon_reload: yes
+        enabled: yes
+        state: started
+    - name: copy the tomcat-users.xml /opt/tomcat/latest/conf/tomcat-users.xml
+      copy: 
+        src: tomcat-users.xml
+        dest: "{{user_home}}/latest/conf/tomcat-users.xml"
+        owner: "{{user_name}}"
+        group: "{{group_name}}"
+    - name: copy the context.xml /opt/tomcat/latest/webapps/manager/META-INF/context.xml
+      copy:
+        src: context.xml
+        dest: "{{user_home}}/latest/webapps/manager/META-INF/context.xml"
+        owner: "{{user_name}}"
+        group: "{{group_name}}"
+    - name: copy the host_context.xml /opt/tomcat/latest/webapps/host-manager/META-INF/context.xml
+      copy: 
+        src: host_context.xml
+        dest: "{{user_home}}/latest/webapps/host-manager/META-INF/context.xml"
+        owner: "{{user_name}}"
+        group: "{{group_name}}"
+    - name: restart tomcat.service
+      systemd:
+        name: "{{tomcat_service_name}}"
+        state: restarted

@@ -1,0 +1,80 @@
+---
+- name: Install tomcat
+  hosts: all
+  become: yes
+  tasks: 
+    - name: Install java-11
+      apt:
+        name: openjdk-11-jdk
+        update_cache: yes
+        state: present
+    - name: add the tomcat group
+      group:
+        name: tomcat
+        state: present
+    - name: add the tomcat user
+      user:
+        name: tomcat
+        create_home: yes
+        home: /opt/tomcat
+        shell: /bin/false
+        state: present
+        group: tomcat
+    - name: wget the tomcat9 file
+      get_url:
+        url: https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.71/bin/apache-tomcat-9.0.71.tar.gz
+        dest: /tmp/
+        remote_src: yes
+    - name: tar the tomcat9 file
+      unarchive:
+        src: /tmp/apache-tomcat-9.0.71.tar.gz
+        dest: /opt/tomcat/
+        remote_src: yes
+    - name: link the tomcat9 file to latest file
+      file:
+        src: /opt/tomcat/apache-tomcat-9.0.71
+        dest: /opt/tomcat/latest
+        state: link
+    - name: change permissions /opt/tomcat
+      file: 
+        path: /opt/tomcat
+        recurse: yes
+        owner: tomcat
+        group: tomcat
+        state: directory
+    - name: add execute permissions for shell files
+      command: sudo sh -c 'chmod +x /opt/tomcat/latest/bin/*.sh'
+    - name: copy the service file to local to tomcat.service
+      copy: 
+        src: tomcat.service
+        dest: /etc/systemd/system/tomcat.service
+        owner: tomcat
+        group: tomcat
+    - name: daemon-reload and enable tomcat
+      systemd:
+        name: tomcat.service
+        daemon_reload: yes
+        enabled: yes
+        state: started
+    - name: copy the tomcat-users.xml /opt/tomcat/latest/conf/tomcat-users.xml
+      copy: 
+        src: tomcat-users.xml
+        dest: /opt/tomcat/latest/conf/tomcat-users.xml
+        owner: tomcat
+        group: tomcat
+    - name: copy the context.xml /opt/tomcat/latest/webapps/manager/META-INF/context.xml
+      copy:
+        src: context.xml
+        dest: /opt/tomcat/latest/webapps/manager/META-INF/context.xml
+        owner: tomcat
+        group: tomcat
+    - name: copy the host_context.xml /opt/tomcat/latest/webapps/host-manager/META-INF/context.xml
+      copy: 
+        src: host_context.xml
+        dest: /opt/tomcat/latest/webapps/host-manager/META-INF/context.xml
+        owner: tomcat
+        group: tomcat
+    - name: restart tomcat.service
+      systemd:
+        name: tomcat.service
+        state: restarted

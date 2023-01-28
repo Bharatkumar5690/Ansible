@@ -1,0 +1,4 @@
+---
+Java_package: openjdk-11-jdk
+Tomcat_java_home: /usr/lib/jvm/java-11-openjdk-amd64
+Tomcat_java_opts: -Djava.security.egd=file:///dev/urandom -Djava.awt.headless=true

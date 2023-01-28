@@ -1,0 +1,122 @@
+---
+- name: Install tomcat
+  hosts: all
+  become: yes
+  tasks:
+    - name: apt update for ubuntu
+      apt:
+        update_cache: yes
+      when: ansible_facts['distribution'] == "Ubuntu"
+    - name: Install java-11
+      package:
+        name: "{{Java_package}}"
+        state: present
+    - name: add the tomcat group
+      group:
+        name: "{{group_name}}"
+        state: present
+    - name: add the tomcat user
+      user:
+        name: "{{user_name}}"
+        create_home: yes
+        home: "{{user_home}}"
+        shell: "{{user_shell}}"
+        state: present
+        group: "{{group_name}}"
+    - name: wget the tomcat9 file
+      get_url:
+        url: "https://dlcdn.apache.org/tomcat/tomcat-{{tomcat_major_version}}/v{{tomcat_version}}/bin/apache-tomcat-{{tomcat_version}}.tar.gz"
+        dest: /tmp/
+    - name: get tomcat stats
+      ansible.builtin.stat:
+        path: "{{ user_home }}/latest/bin/startup.sh"
+      register: tomcat_startup
+    - name: tar the tomcat9 file
+      unarchive:
+        src: /tmp/apache-tomcat-{{tomcat_version}}.tar.gz
+        dest: "{{user_home}}/"
+        remote_src: yes
+      when: not tomcat_startup.stat.exists
+    - name: link the tomcat9 file to latest file
+      file:
+        src: "{{user_home}}/apache-tomcat-{{tomcat_version}}"
+        dest: "{{user_home}}/latest"
+        state: link
+      notify:
+        - add execute permissions for shell files
+    - name: copy the service file to local to tomcat.service
+      copy:
+        src: tomcat.service.j2
+        dest: /etc/systemd/system/tomcat.service
+        owner: "{{user_name}}"
+        group: "{{group_name}}"
+      notify:
+        - daemon-reload and enable tomcat
+    - name: copy the tomcat-users.xml /opt/tomcat/latest/conf/tomcat-users.xml
+      copy:
+        src: tomcat-users.xml.j2
+        dest: "{{user_home}}/latest/conf/tomcat-users.xml"
+        owner: "{{user_name}}"
+        group: "{{group_name}}"
+      notify:
+        - restart tomcat
+    - name: change permissions
+      file:
+        dest: "{{user_home}}"
+        recurse: yes
+        owner: "{{user_name}}"
+        group: "{{group_name}}"
+        state: directory
+      notify:
+        - restart tomcat
+    - name: copy the context.xml /opt/tomcat/latest/webapps/manager/META-INF/context.xml
+      copy:
+        src: context.xml
+        dest: "{{item}}"
+        owner: "{{user_name}}"
+        group: "{{group_name}}"
+      loop:
+        - "{{user_home}}/latest/webapps/manager/META-INF/context.xml"
+        - "{{user_home}}/latest/webapps/host-manager/META-INF/context.xml"
+      notify:
+        - restart tomcat
+    - name: ensure tomcat is running
+      ansible.builtin.systemd:
+        name: "{{ tomcat_service_name }}"
+        state: started
+  handlers:
+    - name: restart tomcat
+      ansible.builtin.systemd:
+        name: "{{ tomcat_service_name }}"
+        state: restarted
+    - name: daemon-reload and enable tomcat
+      systemd:
+        name: tomcat.service
+        daemon_reload: yes
+        enabled: yes
+        state: started
+    - name: add execute permissions for shell files
+      command: sudo sh -c 'chmod +x /opt/tomcat/latest/bin/*.sh'
+
+      
+    - name: Find files
+      find:
+          paths: /opt/tomcat/latest/bin/
+          patterns: "*.sh"
+      register: files_to_change
+    - name: add execute permissions for shell files
+      file:
+          path: "{{ item.path }}"
+          owner: "{{user_name}}"
+          group: "{{group_name}}"
+          mode: '+x'
+      with_items: "{{ files_to_change.files }}"
+
+
+
+
+
+
+
+
+
