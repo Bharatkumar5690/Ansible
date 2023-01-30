@@ -1,0 +1,76 @@
+---
+- name: Install Tomcat on ubuntu
+  hosts: all
+  become: yes
+  tasks: 
+    - name: apt update
+      ansible.builtin.apt:
+        update_cache: yes
+    - name: install java 11
+      ansible.builtin.apt:
+        name: openjdk-11-jdk
+        state: present
+    - name: creating tomcat group
+      ansible.builtin.group:
+        name: tomcat
+        state: present
+    - name: add user tomcat
+      ansible.builtin.user: 
+        name: tomcat
+        create_home: yes
+        group: tomcat
+        home: /opt/tomcat
+        shell: /bin/false
+    - name: wget for tomcat package
+      ansible.builtin.get_url: 
+        url: https://dlcdn.apache.org/tomcat/tomcat-10/v10.0.27/bin/apache-tomcat-10.0.27.tar.gz
+        dest: /tmp
+    - name: un tar the tomcat package
+      ansible.builtin.unarchive:
+        src: /tmp/apache-tomcat-10.0.27.tar.gz
+        dest: /opt/tomcat/
+        group: tomcat
+        owner: tomcat
+    - name: Create a symbolic link
+      ansible.builtin.file:
+        src: /opt/tomcat/apache-tomcat-10.0.27
+        dest: /opt/tomcat/latest
+        owner: tomcat
+        group: tomcat
+        state: link
+    - name: chown
+      ansible.builtin.file:
+        path: /opt/tomcat
+        group: tomcat
+        owner: tomcat
+    - name: execute permissions
+      ansible.builtin.command: sh -c 'chmod +x /opt/tomcat/latest/bin/*.sh'
+    - name: nano the tomcat.service
+      ansible.builtin.copy:
+        src: tomcat.service
+        dest: /etc/systemd/system/tomcat.service
+        remote_src: no
+    - name: enable and daemon-reload
+      ansible.builtin.systemd:
+        name: tomcat.service
+        daemon_reload: yes
+        enabled: yes
+    - name: nano the tomcat-users.xml
+      ansible.builtin.copy:
+        src: tomcat-users.xml
+        dest: /etc/systemd/system/tomcat.service
+        remote_src: no
+    - name: nano the context.xml
+      ansible.builtin.copy:
+        src: context.xml
+        dest: /opt/tomcat/latest/webapps/manager/META-INF/context.xml
+        remote_src: no
+    - name: nano the context.xml
+      ansible.builtin.copy:
+        src: context.xml
+        dest: /opt/tomcat/latest/webapps/host-manager/META-INF/context.xml
+        remote_src: no   
+    - name: tomcat restarted
+      ansible.builtin.systemd: 
+        name: tomcat.service
+        state: restarted
