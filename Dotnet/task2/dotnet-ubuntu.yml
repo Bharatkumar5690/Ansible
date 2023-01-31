@@ -1,0 +1,29 @@
+---
+- name: inatall dotnet
+  hosts: all
+  become: yes
+  vars:
+    packages_url: https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb
+    deb_packges: packages-microsoft-prod.deb
+    dotnet_packages: 
+      - dotnet-sdk-6.0
+      - aspnetcore-runtime-6.0
+      - dotnet-runtime-6.0
+  tasks: 
+    - name: wget the packages
+      get_url: 
+        url: "{{ packages_url }}"
+        dest: /tmp/packages-microsoft-prod.deb
+    - name: install the packages-microsoft-prod.deb
+      dpkg_selections:
+        name: "{{ deb_packges }}"
+        selection: install
+    - name: rm in packages-microsoft-prod.deb
+      file: 
+        path: /tmp/packages-microsoft-prod.deb
+        state: absent
+    - name: install dotnet-sdk-6.0, aspnetcore-runtime-6.0, dotnet-runtime-6.0
+      apt: 
+        name: "{{ dotnet_packages }}"
+        update_cache: yes
+        state: present
