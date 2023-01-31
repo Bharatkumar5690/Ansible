@@ -1,0 +1,5 @@
+[ubuntu]
+172.31.19.81 java_package=default-jre
+
+[centos]
+172.31.18.222 java_package=java-11-openjdk-devel
