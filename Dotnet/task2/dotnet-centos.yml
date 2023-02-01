@@ -1,0 +1,24 @@
+---
+- name: inatall dotnet
+  hosts: all
+  become: yes
+  vars:
+    packages_url: https://packages.microsoft.com/config/centos/7/packages-microsoft-prod.rpm
+    packages_dest: /tmp/packages-microsoft-prod.rpm
+    dotnet_packages: 
+      - dotnet-sdk-7.0
+      - aspnetcore-runtime-7.0
+      - dotnet-runtime-7.0
+  tasks:
+    - name: get url to /tmp/
+      ansible.builtin.get_url:
+        url: "{{ packages_url }}"
+        dest: "{{ packages_dest }}"
+    - name: packages-microsoft-prod
+      ansible.builtin.yum:
+        name: "{{ packages_dest }}"
+        state: present
+    - name: install dotnet
+      ansible.builtin.yum: 
+        name: "{{ dotnet_packages }}"
+        state: present

@@ -1,0 +1,15 @@
+---
+- name: inatall dotnet
+  hosts: all
+  become: yes
+  vars:
+    dotnet_packages: 
+      - dotnet-sdk-6.0
+      - aspnetcore-runtime-6.0
+      - dotnet-runtime-6.0
+  tasks: 
+    - name: install dotnet
+      apt: 
+        name: "{{ dotnet_packages }}"
+        update_cache: yes
+        state: present
