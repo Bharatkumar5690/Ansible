@@ -1,9 +1,0 @@
----
-- name: Install Java-11
-  hosts: all
-  become: yes
-  tasks: 
-    - name: java-11 install
-      yum: 
-        name: java-11-openjdk-devel
-        state: present
