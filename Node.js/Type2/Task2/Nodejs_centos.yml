@@ -1,0 +1,21 @@
+---
+- name: install nodejs on ubuntu
+  hosts: all
+  become: yes
+  vars:
+    nodejs_package_version: 10
+    nodejs_package_url: "https://rpm.nodesource.com/setup_{{nodejs_package_version}}.x"
+    nodejs_package_dest: "/tmp/setup_{{nodejs_package_version}}.x.sh"
+    nodejs_package: nodejs
+  tasks: 
+    - name: Downloading nodejs setup file
+      ansible.builtin.get_url:
+        url: "{{nodejs_package_url}}"
+        dest: "{{nodejs_package_dest}}"
+        mode: '0777' 
+    - name: Execute shell file
+      ansible.builtin.shell: "{{nodejs_package_dest}}"
+    - name: Install nodejs
+      ansible.builtin.yum: 
+        name: "{{nodejs_package}}"
+        state: present

@@ -1,0 +1,6 @@
+---
+- name: install nodejs on ubuntu
+  hosts: all
+  become: yes
+  roles:
+    - Role

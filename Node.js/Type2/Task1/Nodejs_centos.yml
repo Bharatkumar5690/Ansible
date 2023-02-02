@@ -1,0 +1,16 @@
+---
+- name: install nodejs on ubuntu
+  hosts: all
+  become: yes
+  tasks: 
+    - name: Downloading nodejs setup file
+      ansible.builtin.get_url:
+        url:  https://rpm.nodesource.com/setup_10.x
+        dest: /tmp/setup_10.x.sh
+        mode: '0777' 
+    - name: Execute shell file
+      ansible.builtin.shell: "/tmp/setup_10.x.sh"
+    - name: Install nodejs
+      ansible.builtin.yum: 
+        name: nodejs
+        state: present
