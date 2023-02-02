@@ -1,3 +1,0 @@
----
-nodejs_package_version: 18
-nodejs_package_url: "https://deb.nodesource.com/setup_{{nodejs_package_version}}.x"

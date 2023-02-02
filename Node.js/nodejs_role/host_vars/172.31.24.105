@@ -1,3 +1,0 @@
----
-nodejs_package_version: 10
-nodejs_package_url: "https://rpm.nodesource.com/setup_{{nodejs_package_version}}.x"

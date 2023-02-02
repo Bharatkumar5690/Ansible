@@ -1,3 +1,0 @@
----
-nodejs_package_dest: "/tmp/setup_{{nodejs_package_version}}.x.sh"
-nodejs_package: nodejs
