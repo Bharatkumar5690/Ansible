@@ -1,0 +1,4 @@
+---
+# vars file for my
+nginx_packages: nginx
+nopCommerce_service_dest: "/etc/{{ nginx_packages }}/sites-available/default"

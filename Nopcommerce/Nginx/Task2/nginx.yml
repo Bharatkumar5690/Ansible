@@ -1,0 +1,30 @@
+---
+- name: Install nginx for nopCommerce
+  hosts: all
+  become: yes
+  vars: 
+    nginx_packages: nginx
+    nopCommerce_service_dest: "/etc/{{ nginx_packages }}/sites-available/default"
+  tasks:
+    - name: apt update
+      ansible.builtin.apt:
+        update_cache: yes
+    - name: install nginx
+      ansible.builtin.apt:
+        name: "{{ nginx_packages }}"
+        state: present
+      notify: start nginx
+    - name: pass the nopCommerce service in nginx default file
+      ansible.builtin.copy:
+        src: default
+        dest: "{{ nopCommerce_service_dest }}"
+      notify: restart nginx
+  handlers:
+    - name: start nginx
+      ansible.builtin.systemd:
+        name: "{{ nginx_packages }}"
+        state: started
+    - name: restart nginx
+      ansible.builtin.systemd:
+        name: "{{ nginx_packages }}"
+        state: restarted      

@@ -1,0 +1,48 @@
+---
+# tasks file for my
+- name: microsoft key packages install
+  ansible.builtin.apt:
+    deb: "{{ microsoft_key_package_url }}"
+    state: present
+    update_cache: yes
+- name: apt update
+  ansible.builtin.apt:
+    update_cache: yes
+- name: install .net runtime
+  ansible.builtin.package:
+    name: "{{ dotnet_packages }}"
+    state: present
+- name: create directory
+  ansible.builtin.file:
+    path: "{{ nopCommerce_path }}"
+    state: directory
+- name: download nopCommerce
+  ansible.builtin.get_url: 
+    url: "{{ nopCommerce_url }}"
+    dest: "{{ nopCommerce_path }}/nopCommerce_4.60.1_NoSource_linux_x64.zip"
+- name: install unzip
+  ansible.builtin.package:
+    name: unzip
+    state: present
+- name: get nopCommerce stats
+  ansible.builtin.stat:
+    path: "{{ nopCommerce_path }}/System.Xml.dll"
+  register: nopCommerce_unzip
+- name: unpack the nopCommerce
+  ansible.builtin.unarchive:
+    src: "{{ nopCommerce_path }}/nopCommerce_4.60.1_NoSource_linux_x64.zip"
+    dest: "{{ nopCommerce_path }}/"
+  when: not nopCommerce_unzip.stat.exists
+- name: create directory
+  ansible.builtin.file:
+    path: "{{item}}"
+    state: directory
+  loop: 
+    - "{{ nopCommerce_path }}/bin"
+    - "{{ nopCommerce_path }}/logs"
+  notify: file permissions
+- name: copy nopCommerce services
+  ansible.builtin.copy:
+    src: nopCommerce.service
+    dest: /etc/systemd/system/nopCommerce.service
+  notify: restarted nopCommerce.service

@@ -1,0 +1,15 @@
+---
+# tasks file for my
+- name: apt update
+  ansible.builtin.apt:
+    update_cache: yes
+- name: install nginx
+  ansible.builtin.apt:
+    name: "{{ nginx_packages }}"
+    state: present
+  notify: start nginx
+- name: pass the nopCommerce service in nginx default file
+  ansible.builtin.copy:
+    src: default
+    dest: "{{ nopCommerce_service_dest }}"
+  notify: restart nginx

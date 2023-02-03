@@ -2,10 +2,17 @@
 - name: Install NopCommerce
   hosts: all
   become: yes
+  vars:
+    microsoft_key_package_url: https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb
+    dotnet_packages:
+      - apt-transport-https
+      - aspnetcore-runtime-7.0
+    nopCommerce_path: /var/www/nopCommerce
+    nopCommerce_url: https://github.com/nopSolutions/nopCommerce/releases/download/release-4.60.1/nopCommerce_4.60.1_NoSource_linux_x64.zip
   tasks: 
     - name: microsoft key packages install
       ansible.builtin.apt:
-        deb: https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb
+        deb: "{{ microsoft_key_package_url }}"
         state: present
         update_cache: yes
     - name: apt update
@@ -13,36 +20,34 @@
         update_cache: yes
     - name: install .net runtime
       ansible.builtin.package:
-        name: 
-          - apt-transport-https
-          - aspnetcore-runtime-7.0
+        name: "{{ dotnet_packages }}"
         state: present
     - name: create directory
       ansible.builtin.file:
-        path: /var/www/nopCommerce
+        path: "{{ nopCommerce_path }}"
         state: directory
     - name: download nopCommerce
       ansible.builtin.get_url: 
-        url: https://github.com/nopSolutions/nopCommerce/releases/download/release-4.60.1/nopCommerce_4.60.1_NoSource_linux_x64.zip
-        dest: /var/www/nopCommerce/nopCommerce_4.60.1_NoSource_linux_x64.zip
+        url: "{{ nopCommerce_url }}"
+        dest: "{{ nopCommerce_path }}/nopCommerce_4.60.1_NoSource_linux_x64.zip"
     - name: install unzip
       ansible.builtin.package:
         name: unzip
         state: present
     - name: unpack the nopCommerce
       ansible.builtin.unarchive:
-        src: /var/www/nopCommerce/nopCommerce_4.60.1_NoSource_linux_x64.zip
-        dest: /var/www/nopCommerce/
+        src: "{{ nopCommerce_path }}/nopCommerce_4.60.1_NoSource_linux_x64.zip"
+        dest: "{{ nopCommerce_path }}/"
     - name: create directory
       ansible.builtin.file:
         path: "{{item}}"
         state: directory
       loop: 
-        - /var/www/nopCommerce/bin
-        - /var/www/nopCommerce/logs
+        - "{{ nopCommerce_path }}/bin"
+        - "{{ nopCommerce_path }}/logs"
     - name: file permissions
       ansible.builtin.file:
-        path: /var/www/nopCommerce/
+        path: "{{ nopCommerce_path }}/"
         group: www-data
         owner: www-data
         recurse: yes

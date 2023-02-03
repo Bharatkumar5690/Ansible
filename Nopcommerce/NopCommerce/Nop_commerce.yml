@@ -2,15 +2,30 @@
 - name: Install NopCommerce
   hosts: all
   become: yes
-  tasks: 
+  tasks:
+    - name: 
     - name: microsoft key packages install
       ansible.builtin.apt:
         deb: https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb
         state: present
         update_cache: yes
+      when: ansible_facts['distribution'] == "Ubuntu"
+    - name:
+    # - name: wget the packages of microsoft key packages
+    #   ansible.builtin.get_url:
+    #     url: https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb
+    #     dest: /tmp/packages-microsoft-prod.deb
+    # - name: apt update
+    #   ansible.builtin.apt:
+    #     update_cache: yes
+    # - name: install microsoft key packages
+    #   ansible.builtin.package:
+    #     name: /tmp/packages-microsoft-prod.deb
+    #     state: present
     - name: apt update
       ansible.builtin.apt:
         update_cache: yes
+      when: ansible_facts['distribution'] == "Ubuntu"
     - name: install .net runtime
       ansible.builtin.package:
         name: 
@@ -35,17 +50,19 @@
         dest: /var/www/nopCommerce/
     - name: create directory
       ansible.builtin.file:
-        path: "{{item}}"
+        path: /var/www/nopCommerce/bin
         state: directory
-      loop: 
-        - /var/www/nopCommerce/bin
-        - /var/www/nopCommerce/logs
+    - name: create directory
+      ansible.builtin.file:
+        path: /var/www/nopCommerce/logs
+        state: directory
     - name: file permissions
       ansible.builtin.file:
         path: /var/www/nopCommerce/
         group: www-data
         owner: www-data
         recurse: yes
+        state: file
     - name: copy nopCommerce services
       ansible.builtin.copy:
         src: nopCommerce.service
