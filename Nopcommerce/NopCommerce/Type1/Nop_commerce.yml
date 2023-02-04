@@ -1,0 +1,74 @@
+---
+- name: Install NopCommerce
+  hosts: all
+  become: yes
+  tasks:
+    - name: 
+    - name: microsoft key packages install
+      ansible.builtin.apt:
+        deb: https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb
+        state: present
+        update_cache: yes
+      when: ansible_facts['distribution'] == "Ubuntu"
+    - name:
+    # - name: wget the packages of microsoft key packages
+    #   ansible.builtin.get_url:
+    #     url: https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb
+    #     dest: /tmp/packages-microsoft-prod.deb
+    # - name: apt update
+    #   ansible.builtin.apt:
+    #     update_cache: yes
+    # - name: install microsoft key packages
+    #   ansible.builtin.package:
+    #     name: /tmp/packages-microsoft-prod.deb
+    #     state: present
+    - name: apt update
+      ansible.builtin.apt:
+        update_cache: yes
+      when: ansible_facts['distribution'] == "Ubuntu"
+    - name: install .net runtime
+      ansible.builtin.package:
+        name: 
+          - apt-transport-https
+          - aspnetcore-runtime-7.0
+        state: present
+    - name: create directory
+      ansible.builtin.file:
+        path: /var/www/nopCommerce
+        state: directory
+    - name: download nopCommerce
+      ansible.builtin.get_url: 
+        url: https://github.com/nopSolutions/nopCommerce/releases/download/release-4.60.1/nopCommerce_4.60.1_NoSource_linux_x64.zip
+        dest: /var/www/nopCommerce/nopCommerce_4.60.1_NoSource_linux_x64.zip
+    - name: install unzip
+      ansible.builtin.package:
+        name: unzip
+        state: present
+    - name: unpack the nopCommerce
+      ansible.builtin.unarchive:
+        src: /var/www/nopCommerce/nopCommerce_4.60.1_NoSource_linux_x64.zip
+        dest: /var/www/nopCommerce/
+    - name: create directory
+      ansible.builtin.file:
+        path: /var/www/nopCommerce/bin
+        state: directory
+    - name: create directory
+      ansible.builtin.file:
+        path: /var/www/nopCommerce/logs
+        state: directory
+    - name: file permissions
+      ansible.builtin.file:
+        path: /var/www/nopCommerce/
+        group: www-data
+        owner: www-data
+        recurse: yes
+        state: file
+    - name: copy nopCommerce services
+      ansible.builtin.copy:
+        src: nopCommerce.service
+        dest: /etc/systemd/system/nopCommerce.service
+    - name: start nopCommerce.service
+      ansible.builtin.systemd:
+        name: nopCommerce.service
+        state: started
+    

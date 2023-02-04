@@ -1,0 +1,12 @@
+---
+# handlers file for my
+- name: file permissions
+  ansible.builtin.file:
+    path: "{{ nopCommerce_path }}/"
+    group: www-data
+    owner: www-data
+    recurse: yes
+- name: restarted nopCommerce.service
+  ansible.builtin.systemd:
+    name: nopCommerce.service
+    state: restarted

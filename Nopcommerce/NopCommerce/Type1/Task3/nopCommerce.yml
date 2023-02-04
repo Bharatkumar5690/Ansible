@@ -1,0 +1,69 @@
+---
+- name: Install NopCommerce
+  hosts: all
+  become: yes
+  vars:
+    microsoft_key_package_url: https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb
+    dotnet_packages:
+      - apt-transport-https
+      - aspnetcore-runtime-7.0
+    nopCommerce_path: /var/www/nopCommerce
+    nopCommerce_url: https://github.com/nopSolutions/nopCommerce/releases/download/release-4.60.1/nopCommerce_4.60.1_NoSource_linux_x64.zip
+  tasks: 
+    - name: microsoft key packages install
+      ansible.builtin.apt:
+        deb: "{{ microsoft_key_package_url }}"
+        state: present
+        update_cache: yes
+    - name: apt update
+      ansible.builtin.apt:
+        update_cache: yes
+    - name: install .net runtime
+      ansible.builtin.package:
+        name: "{{ dotnet_packages }}"
+        state: present
+    - name: create directory
+      ansible.builtin.file:
+        path: "{{ nopCommerce_path }}"
+        state: directory
+    - name: download nopCommerce
+      ansible.builtin.get_url: 
+        url: "{{ nopCommerce_url }}"
+        dest: "{{ nopCommerce_path }}/nopCommerce_4.60.1_NoSource_linux_x64.zip"
+    - name: install unzip
+      ansible.builtin.package:
+        name: unzip
+        state: present
+    - name: get nopCommerce stats
+      ansible.builtin.stat:
+        path: "{{ nopCommerce_path }}/System.Xml.dll"
+      register: nopCommerce_unzip
+    - name: unpack the nopCommerce
+      ansible.builtin.unarchive:
+        src: "{{ nopCommerce_path }}/nopCommerce_4.60.1_NoSource_linux_x64.zip"
+        dest: "{{ nopCommerce_path }}/"
+      when: not nopCommerce_unzip.stat.exists
+    - name: create directory
+      ansible.builtin.file:
+        path: "{{item}}"
+        state: directory
+      loop: 
+        - "{{ nopCommerce_path }}/bin"
+        - "{{ nopCommerce_path }}/logs"
+      notify: file permissions
+    - name: copy nopCommerce services
+      ansible.builtin.copy:
+        src: nopCommerce.service
+        dest: /etc/systemd/system/nopCommerce.service
+      notify: restarted nopCommerce.service
+  handlers:
+    - name: file permissions
+      ansible.builtin.file:
+        path: "{{ nopCommerce_path }}/"
+        group: www-data
+        owner: www-data
+        recurse: yes
+    - name: restarted nopCommerce.service
+      ansible.builtin.systemd:
+        name: nopCommerce.service
+        state: restarted
