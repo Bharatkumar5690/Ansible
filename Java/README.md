@@ -27,7 +27,7 @@ sudo apt install openjdk-11-jdk -y
 ```
 ![Preview](Images/image_1.jpg)
 
-### Centos 7
+### Centos7
 * Java manual steps for centos7 
 ```
 sudo yum update -y

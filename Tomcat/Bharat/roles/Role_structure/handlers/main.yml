@@ -1,0 +1,14 @@
+---
+# handlers file for my
+- name: restart tomcat
+  ansible.builtin.systemd:
+    name: "{{ tomcat_service_name }}"
+    state: restarted
+- name: daemon-reload and enable tomcat
+  systemd:
+    name: tomcat.service
+    daemon_reload: yes
+    enabled: yes
+    state: started
+- name: add execute permissions for shell files
+  command: sudo sh -c 'chmod +x /opt/tomcat/latest/bin/*.sh'
