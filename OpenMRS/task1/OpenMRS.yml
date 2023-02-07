@@ -20,18 +20,26 @@
         shell: /bin/false
         group: tomcat
         home: /opt/tomcat
-    - name: download the tar file
-      ansible.builtin.get_url:
-        url: https://archive.apache.org/dist/tomcat/tomcat-7/v7.0.109/bin/apache-tomcat-7.0.109.tar.gz
-        dest: /tmp/apache-tomcat-7.0.109.tar.gz
     - name: create the tomcat directory
       ansible.builtin.file:
         path: /opt/tomcat
         state: directory
+    - name: download the tar file
+      ansible.builtin.get_url:
+        url: https://archive.apache.org/dist/tomcat/tomcat-7/v7.0.109/bin/apache-tomcat-7.0.109.tar.gz
+        dest: /opt/tomcat/apache-tomcat-7.0.109.tar.gz
     - name: tar the tomcat file
       ansible.builtin.unarchive: 
-        src: /tmp/apache-tomcat-7.0.109.tar.gz
+        src: /opt/tomcat/apache-tomcat-7.0.109.tar.gz
         dest: /opt/tomcat/
+        remote_src: yes
+    - name: copy the files of tomcat to /opt/tomcat
+      ansible.builtin.copy:
+        src: /opt/tomcat/apache-tomcat-7.0.109/
+        dest: /opt/tomcat/
+        owner: tomcat
+        group: tomcat
+        remote_src: yes
     - name: add a group the tomcat and recursive
       ansible.builtin.file:
         path: /opt/tomcat
@@ -41,6 +49,7 @@
       ansible.builtin.file:
         path: /opt/tomcat/conf
         mode: '0750'
+        state: directory
     - name: change the owner to the files
       ansible.builtin.file:
         path: 
@@ -54,10 +63,13 @@
       ansible.builtin.copy:
         src: tomcat.service
         dest: /etc/systemd/system/tomcat.service
+        owner: tomcat
+        group: tomcat
     - name: daemon-reload & start tomcat
       ansible.builtin.systemd: 
-        name: tomcat
+        name: tomcat.service
         daemon_reload: yes
+        enabled: yes
         state: started
     - name: create a OpenMRS directory
       ansible.builtin.file:
@@ -77,6 +89,7 @@
       ansible.builtin.file:
         path: /opt/tomcat/webapps/openmrs.war
         owner: tomcat
-        group: tomcat
-        recurse: yes
+        group: tomcat 8
+        state: file
+          
 
